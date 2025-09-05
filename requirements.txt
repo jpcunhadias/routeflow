@@ -6,7 +6,7 @@ scikit-learn==1.5.2
 
 # Tracking / Orquestração / Cliente
 mlflow==2.16.2
-apache-airflow-client==2.15.0
+apache-airflow-client==3.0.2
 
 # Utilidades
 pyyaml==6.0.2
@@ -20,3 +20,5 @@ fastapi==0.115.0
 uvicorn==0.30.6
 pyspark==3.5.1
 maturin==1.7.1 # para compilar Rust p/ Python
+pyarrow
+psycopg2-binary

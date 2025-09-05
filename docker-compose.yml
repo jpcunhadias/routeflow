@@ -1,5 +1,21 @@
-version: "3.9"
 services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    ports:
+      - "5432:5432"   # opcional expor
+    volumes:
+      - ./airflow/postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow -d airflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
   mlflow:
     image: ghcr.io/mlflow/mlflow:latest
     command: >
@@ -9,10 +25,9 @@ services:
       --backend-store-uri sqlite:///mlflow.db
       --default-artifact-root /mlflow/artifacts
     ports:
-      - "5000:5000"
+      - "5500:5000"
     volumes:
       - ./mlflow:/mlflow
-      - ./mlflow/mlflow.db:/mlflow/mlflow.db
     environment:
       - MLFLOW_S3_ENDPOINT_URL=
     restart: unless-stopped
@@ -20,14 +35,22 @@ services:
   airflow-webserver:
     image: apache/airflow:2.10.2
     depends_on:
-      - airflow-scheduler
-      - mlflow
+      postgres:
+        condition: service_healthy
+      airflow-scheduler:
+        condition: service_started
+      mlflow:
+        condition: service_started
     environment:
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
       - AIRFLOW__CORE__LOAD_EXAMPLES=False
       - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=True
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
       - _PIP_ADDITIONAL_REQUIREMENTS=-r /requirements.txt
       - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - NYC_TLC_YEARS=2023
+      - NYC_TLC_MONTHS=01,02
+      - NYC_TLC_COLOR=yellow
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/logs:/opt/airflow/logs
@@ -43,12 +66,19 @@ services:
   airflow-scheduler:
     image: apache/airflow:2.10.2
     depends_on:
-      - mlflow
+      postgres:
+        condition: service_healthy
+      mlflow:
+        condition: service_started
     environment:
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
       - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
       - _PIP_ADDITIONAL_REQUIREMENTS=-r /requirements.txt
       - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - NYC_TLC_YEARS=2023
+      - NYC_TLC_MONTHS=01,02
+      - NYC_TLC_COLOR=yellow
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/logs:/opt/airflow/logs
