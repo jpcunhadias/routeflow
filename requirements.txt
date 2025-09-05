@@ -1,0 +1,22 @@
+# Core data / model
+pandas==2.2.2
+numpy==1.26.4
+scipy==1.13.1
+scikit-learn==1.5.2
+
+# Tracking / Orquestração / Cliente
+mlflow==2.16.2
+apache-airflow-client==2.15.0
+
+# Utilidades
+pyyaml==6.0.2
+python-dotenv==1.0.1
+
+# (Opcional, só se usar o CLI com Fire)
+fire==0.6.0
+
+ortools==9.10.4067
+fastapi==0.115.0
+uvicorn==0.30.6
+pyspark==3.5.1
+maturin==1.7.1 # para compilar Rust p/ Python
